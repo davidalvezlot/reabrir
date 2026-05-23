@@ -5,6 +5,7 @@
 <title>Reabrir actividad</title>
 
 <style>
+
 body{
   font-family:Arial;
   background:#f4f6f9;
@@ -38,6 +39,7 @@ button{
 button:hover{
   background:#27ae60;
 }
+
 </style>
 </head>
 
@@ -45,14 +47,18 @@ button:hover{
 
 <div class="card">
 
-  <h2>Reapertura de actividad</h2>
+  <h2>
+    Reapertura de actividad
+  </h2>
 
   <p id="estado">
     Verificando actividad...
   </p>
 
   <button onclick="aprobar()">
+
     Aprobar reapertura
+
   </button>
 
 </div>
@@ -65,7 +71,8 @@ from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import {
   getFirestore,
   doc,
-  updateDoc
+  updateDoc,
+  getDoc
 }
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
@@ -74,46 +81,67 @@ from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 const app = initializeApp({
 
   apiKey: "TU_API_KEY",
+
   authDomain: "agrotecdb.firebaseapp.com",
+
   projectId: "agrotecdb"
 
 });
 
-const db = getFirestore(app);
+const db =
+getFirestore(app);
 
 
-// PARAMS
+// PARAMETROS
 const params =
-  new URLSearchParams(window.location.search);
+new URLSearchParams(
+  window.location.search
+);
 
 const actId =
-  params.get("actId");
+params.get("actId");
 
 
-// APROBAR
-window.aprobar = async () => {
+// VERIFICAR
+async function verificar(){
 
-  try {
+  if(!actId){
 
-    await updateDoc(
+    document
+    .getElementById("estado")
+    .innerHTML =
+    "Actividad inválida";
 
-      doc(db, "actividades", actId),
+    return;
 
-      {
+  }
 
-        estado: "en_proceso",
+  try{
 
-        fechaFin: "",
-
-        iniciada: true
-
-      }
-
+    const snap =
+    await getDoc(
+      doc(db,"actividades",actId)
     );
 
-    document.getElementById("estado")
+    if(!snap.exists()){
+
+      document
+      .getElementById("estado")
+      .innerHTML =
+      "Actividad no encontrada";
+
+      return;
+
+    }
+
+    const data = snap.data();
+
+    document
+    .getElementById("estado")
     .innerHTML =
-      "Actividad reabierta correctamente";
+
+    `Actividad:
+    ${data.nombre}`;
 
   }
 
@@ -121,9 +149,68 @@ window.aprobar = async () => {
 
     console.error(error);
 
-    document.getElementById("estado")
+    document
+    .getElementById("estado")
     .innerHTML =
-      "Error al reabrir actividad";
+    "Error verificando actividad";
+
+  }
+
+}
+
+verificar();
+
+
+// APROBAR
+window.aprobar = async()=>{
+
+  try{
+
+    // REABRIR ACTIVIDAD
+    await updateDoc(
+
+      doc(db,"actividades",actId),
+
+      {
+
+        // ESTADO DISPONIBLE
+        estado:"disponible",
+
+        // IMPORTANTE
+        // NO INICIAR AUTOMATICAMENTE
+        iniciada:false,
+
+        // REINICIAR CONTADOR
+        progreso:0,
+
+        tiempoTranscurrido:0,
+
+        // BORRAR FECHAS
+        fechaInicio:"",
+
+        fechaFin:""
+
+      }
+
+    );
+
+    document
+    .getElementById("estado")
+    .innerHTML =
+
+    "Actividad reabierta correctamente.<br><br>El trabajador ya puede volver a iniciar la tarea manualmente.";
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    document
+    .getElementById("estado")
+    .innerHTML =
+
+    "Error al reabrir actividad";
 
   }
 
