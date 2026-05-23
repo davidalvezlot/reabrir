@@ -240,6 +240,7 @@ window.aprobar = async()=>{
 
   try{
 
+    // REABRIR ACTIVIDAD
     await updateDoc(
 
       doc(db,"actividades",actId),
@@ -268,7 +269,7 @@ window.aprobar = async()=>{
 
     "Actividad reabierta correctamente.<br><br>El trabajador ya puede volver a iniciar la tarea.";
 
-    // MENSAJE
+    // ESTADO MENSAJE
     estadoWhatsapp = "aprobada";
 
     // MOSTRAR BOTON
@@ -304,7 +305,7 @@ window.rechazar = async()=>{
 
     "La reapertura NO fue autorizada.";
 
-    // MENSAJE
+    // ESTADO MENSAJE
     estadoWhatsapp = "rechazada";
 
     // MOSTRAR BOTON
@@ -324,29 +325,57 @@ window.rechazar = async()=>{
 
 
 // WHATSAPP
-window.enviarWhatsapp = ()=>{
+window.enviarWhatsapp = async()=>{
 
-  const telefono =
-  actividad.telefono || "";
+  try{
 
-  if(!telefono){
+    // BUSCAR USUARIO
+    const usuarioSnap =
+    await getDoc(
 
-    alert(
-      "El trabajador no tiene teléfono registrado"
+      doc(
+        db,
+        "usuarios",
+        actividad.usuarioId
+      )
+
     );
 
-    return;
+    if(!usuarioSnap.exists()){
 
-  }
+      alert(
+        "Usuario no encontrado"
+      );
 
-  let mensaje = "";
+      return;
 
-  // APROBADA
-  if(
-    estadoWhatsapp === "aprobada"
-  ){
+    }
 
-    mensaje =
+    const usuario =
+    usuarioSnap.data();
+
+    // TELEFONO
+    const telefono =
+    usuario.telefono || "";
+
+    if(!telefono){
+
+      alert(
+        "El usuario no tiene teléfono registrado"
+      );
+
+      return;
+
+    }
+
+    let mensaje = "";
+
+    // APROBADA
+    if(
+      estadoWhatsapp === "aprobada"
+    ){
+
+      mensaje =
 
 `Hola ${actividad.trabajador},
 
@@ -360,14 +389,14 @@ ${actividad.zona}
 
 Ya puedes volver a iniciar la tarea.`;
 
-  }
+    }
 
-  // RECHAZADA
-  if(
-    estadoWhatsapp === "rechazada"
-  ){
+    // RECHAZADA
+    if(
+      estadoWhatsapp === "rechazada"
+    ){
 
-    mensaje =
+      mensaje =
 
 `Hola ${actividad.trabajador},
 
@@ -379,13 +408,27 @@ ${actividad.nombre}
 Zona:
 ${actividad.zona}`;
 
+    }
+
+    // URL WHATSAPP
+    const url =
+
+    `https://wa.me/52${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+    // ABRIR WHATSAPP
+    window.open(url,"_blank");
+
   }
 
-  const url =
+  catch(error){
 
-  `https://wa.me/52${telefono}?text=${encodeURIComponent(mensaje)}`;
+    console.error(error);
 
-  window.open(url,"_blank");
+    alert(
+      "Error enviando WhatsApp"
+    );
+
+  }
 
 };
 
