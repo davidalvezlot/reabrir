@@ -56,6 +56,14 @@ button{
   background:#c0392b;
 }
 
+.whatsapp{
+  background:#25D366;
+}
+
+.whatsapp:hover{
+  background:#1ebc59;
+}
+
 #estado{
   margin-top:15px;
   background:#f7f7f7;
@@ -91,6 +99,17 @@ button{
     onclick="rechazar()">
 
     No autorizar reapertura
+
+  </button>
+
+  <!-- BOTON WHATSAPP -->
+  <button
+    id="btnWhatsapp"
+    class="whatsapp"
+    style="display:none"
+    onclick="enviarWhatsapp()">
+
+    Enviar mensaje por WhatsApp
 
   </button>
 
@@ -135,6 +154,9 @@ const actId =
 params.get("actId");
 
 let actividad = null;
+
+// ESTADO MENSAJE
+let estadoWhatsapp = "";
 
 
 // VERIFICAR ACTIVIDAD
@@ -181,10 +203,12 @@ async function verificar(){
 
     <b>Actividad:</b>
     ${actividad.nombre}
+
     <br><br>
 
     <b>Trabajador:</b>
     ${actividad.trabajador}
+
     <br><br>
 
     <b>Zona:</b>
@@ -216,7 +240,6 @@ window.aprobar = async()=>{
 
   try{
 
-    // REABRIR ACTIVIDAD
     await updateDoc(
 
       doc(db,"actividades",actId),
@@ -245,31 +268,13 @@ window.aprobar = async()=>{
 
     "Actividad reabierta correctamente.<br><br>El trabajador ya puede volver a iniciar la tarea.";
 
+    // MENSAJE
+    estadoWhatsapp = "aprobada";
 
-    // WHATSAPP
-    // TELEFONO DEL TRABAJADOR
-    // DEBE VENIR EN FIREBASE
-    const telefono =
-    actividad.telefono || "";
-
-    if(telefono){
-
-      const mensaje =
-
-      `Hola ${actividad.trabajador},
-
-La actividad "${actividad.nombre}" fue reabierta y ya puedes volver a iniciarla.
-
-Zona: ${actividad.zona}`;
-
-      const url =
-
-      `https://wa.me/52${telefono}?text=${encodeURIComponent(mensaje)}`;
-
-      // ABRIR WHATSAPP
-      window.open(url,"_blank");
-
-    }
+    // MOSTRAR BOTON
+    document
+    .getElementById("btnWhatsapp")
+    .style.display = "block";
 
   }
 
@@ -299,6 +304,14 @@ window.rechazar = async()=>{
 
     "La reapertura NO fue autorizada.";
 
+    // MENSAJE
+    estadoWhatsapp = "rechazada";
+
+    // MOSTRAR BOTON
+    document
+    .getElementById("btnWhatsapp")
+    .style.display = "block";
+
   }
 
   catch(error){
@@ -306,6 +319,73 @@ window.rechazar = async()=>{
     console.error(error);
 
   }
+
+};
+
+
+// WHATSAPP
+window.enviarWhatsapp = ()=>{
+
+  const telefono =
+  actividad.telefono || "";
+
+  if(!telefono){
+
+    alert(
+      "El trabajador no tiene teléfono registrado"
+    );
+
+    return;
+
+  }
+
+  let mensaje = "";
+
+  // APROBADA
+  if(
+    estadoWhatsapp === "aprobada"
+  ){
+
+    mensaje =
+
+`Hola ${actividad.trabajador},
+
+Tu solicitud de reapertura fue APROBADA.
+
+Actividad:
+${actividad.nombre}
+
+Zona:
+${actividad.zona}
+
+Ya puedes volver a iniciar la tarea.`;
+
+  }
+
+  // RECHAZADA
+  if(
+    estadoWhatsapp === "rechazada"
+  ){
+
+    mensaje =
+
+`Hola ${actividad.trabajador},
+
+Tu solicitud de reapertura NO fue autorizada.
+
+Actividad:
+${actividad.nombre}
+
+Zona:
+${actividad.zona}`;
+
+  }
+
+  const url =
+
+  `https://wa.me/52${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+  window.open(url,"_blank");
 
 };
 
