@@ -4,71 +4,135 @@
 <meta charset="UTF-8">
 <title>Reabrir actividad</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 
+/* =========================
+   GENERAL
+========================= */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
 body{
-  font-family:Arial;
-  background:#f4f6f9;
+  font-family:'Inter',sans-serif;
+  background:#eef2f6;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
+  min-height:100vh;
+  padding:20px;
+  color:#1e293b;
 }
+
+/* =========================
+   CARD
+========================= */
 
 .card{
-  background:white;
-  padding:30px;
-  border-radius:15px;
-  width:380px;
-  text-align:center;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  width:100%;
+  max-width:460px;
+  background:#f8f8f9;
+  border-radius:30px;
+  padding:35px;
+  box-shadow:0 10px 30px rgba(15,23,42,0.06);
+  border:1px solid #e5e7eb;
 }
 
+/* =========================
+   TITULOS
+========================= */
+
 h2{
-  margin-top:0;
+  font-size:34px;
+  font-weight:800;
+  color:#243247;
+  margin-bottom:10px;
 }
+
+.subtitulo{
+  color:#64748b;
+  font-size:15px;
+  margin-bottom:25px;
+  line-height:1.5;
+}
+
+/* =========================
+   ESTADO
+========================= */
+
+#estado{
+  background:white;
+  border:1px solid #edf1f5;
+  border-radius:24px;
+  padding:24px;
+  margin-bottom:22px;
+  font-size:15px;
+  color:#334155;
+  line-height:1.8;
+}
+
+#estado b{
+  color:#243247;
+}
+
+/* =========================
+   BOTONES
+========================= */
 
 button{
   width:100%;
-  padding:12px;
   border:none;
-  border-radius:10px;
-  color:white;
-  font-weight:bold;
+  padding:14px;
+  border-radius:16px;
   cursor:pointer;
-  margin-top:15px;
   font-size:15px;
+  font-weight:700;
+  transition:0.2s;
+  margin-top:12px;
+}
+
+button:hover{
+  opacity:0.92;
 }
 
 .aprobar{
-  background:#2ecc71;
-}
-
-.aprobar:hover{
-  background:#27ae60;
+  background:#243247;
+  color:white;
 }
 
 .rechazar{
-  background:#e74c3c;
-}
-
-.rechazar:hover{
-  background:#c0392b;
+  background:#e2e8f0;
+  color:#243247;
 }
 
 .whatsapp{
-  background:#25D366;
+  background:#f1f5f9;
+  color:#334155;
 }
 
-.whatsapp:hover{
-  background:#1ebc59;
-}
+/* =========================
+   RESPONSIVE
+========================= */
 
-#estado{
-  margin-top:15px;
-  background:#f7f7f7;
-  padding:12px;
-  border-radius:10px;
+@media(max-width:600px){
+
+  .card{
+    padding:25px;
+    border-radius:24px;
+  }
+
+  h2{
+    font-size:28px;
+  }
+
 }
 
 </style>
@@ -81,6 +145,10 @@ button{
   <h2>
     Reapertura de actividad
   </h2>
+
+  <p class="subtitulo">
+    Gestión y autorización de solicitudes de reapertura
+  </p>
 
   <div id="estado">
     Verificando actividad...
@@ -128,7 +196,10 @@ import {
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 
-// FIREBASE
+/* =========================
+   FIREBASE
+========================= */
+
 const app = initializeApp({
 
   apiKey:"TU_API_KEY",
@@ -143,7 +214,10 @@ const db =
 getFirestore(app);
 
 
-// PARAMETROS
+/* =========================
+   PARAMETROS
+========================= */
+
 const params =
 new URLSearchParams(
   window.location.search
@@ -157,7 +231,10 @@ let actividad = null;
 let estadoWhatsapp = "";
 
 
-// VERIFICAR ACTIVIDAD
+/* =========================
+   VERIFICAR ACTIVIDAD
+========================= */
+
 async function verificar(){
 
   if(!actId){
@@ -238,12 +315,14 @@ async function verificar(){
 verificar();
 
 
-// APROBAR
+/* =========================
+   APROBAR
+========================= */
+
 window.aprobar = async()=>{
 
   try{
 
-    // REABRIR DESDE EL MISMO PROGRESO
     await updateDoc(
 
       doc(db,"actividades",actId),
@@ -266,16 +345,18 @@ window.aprobar = async()=>{
 
     `
 
-    Actividad reabierta correctamente.
+    <b>Actividad reabierta correctamente.</b>
 
     <br><br>
 
     El trabajador continuará desde el
-    progreso anterior:
+    progreso anterior.
 
     <br><br>
 
-    <b>${actividad.progreso || 0}%</b>
+    <b>Progreso actual:</b>
+
+    ${actividad.progreso || 0}%
 
     `;
 
@@ -302,14 +383,26 @@ window.aprobar = async()=>{
 };
 
 
-// RECHAZAR
+/* =========================
+   RECHAZAR
+========================= */
+
 window.rechazar = async()=>{
 
   document
   .getElementById("estado")
   .innerHTML =
 
-  "La reapertura NO fue autorizada.";
+  `
+
+  <b>Solicitud rechazada.</b>
+
+  <br><br>
+
+  La reapertura de la actividad
+  no fue autorizada.
+
+  `;
 
   estadoWhatsapp = "rechazada";
 
@@ -320,7 +413,10 @@ window.rechazar = async()=>{
 };
 
 
-// WHATSAPP
+/* =========================
+   WHATSAPP
+========================= */
+
 window.enviarWhatsapp = async()=>{
 
   try{
@@ -350,7 +446,9 @@ window.enviarWhatsapp = async()=>{
     usuarioSnap.data();
 
     const telefono =
-    usuario.telefono || "";
+    (usuario.telefono || "")
+    .replace(/\s+/g,"")
+    .replace("+52","");
 
     if(!telefono){
 
@@ -364,7 +462,6 @@ window.enviarWhatsapp = async()=>{
 
     let mensaje = "";
 
-    // APROBADA
     if(
       estadoWhatsapp === "aprobada"
     ){
@@ -381,13 +478,12 @@ ${actividad.nombre}
 Zona:
 ${actividad.zona}
 
-Tu actividad continuará desde el progreso anterior:
+La actividad continuará desde el progreso anterior:
 
 ${actividad.progreso || 0}%`;
 
     }
 
-    // RECHAZADA
     if(
       estadoWhatsapp === "rechazada"
     ){
