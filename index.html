@@ -102,7 +102,6 @@ button{
 
   </button>
 
-  <!-- BOTON WHATSAPP -->
   <button
     id="btnWhatsapp"
     class="whatsapp"
@@ -155,7 +154,6 @@ params.get("actId");
 
 let actividad = null;
 
-// ESTADO MENSAJE
 let estadoWhatsapp = "";
 
 
@@ -214,6 +212,11 @@ async function verificar(){
     <b>Zona:</b>
     ${actividad.zona}
 
+    <br><br>
+
+    <b>Progreso actual:</b>
+    ${actividad.progreso || 0}%
+
     `;
 
   }
@@ -240,22 +243,16 @@ window.aprobar = async()=>{
 
   try{
 
-    // REABRIR ACTIVIDAD
+    // REABRIR DESDE EL MISMO PROGRESO
     await updateDoc(
 
       doc(db,"actividades",actId),
 
       {
 
-        estado:"disponible",
+        estado:"en_proceso",
 
-        iniciada:false,
-
-        progreso:0,
-
-        tiempoTranscurrido:0,
-
-        fechaInicio:"",
+        iniciada:true,
 
         fechaFin:""
 
@@ -267,12 +264,23 @@ window.aprobar = async()=>{
     .getElementById("estado")
     .innerHTML =
 
-    "Actividad reabierta correctamente.<br><br>El trabajador ya puede volver a iniciar la tarea.";
+    `
 
-    // ESTADO MENSAJE
+    Actividad reabierta correctamente.
+
+    <br><br>
+
+    El trabajador continuará desde el
+    progreso anterior:
+
+    <br><br>
+
+    <b>${actividad.progreso || 0}%</b>
+
+    `;
+
     estadoWhatsapp = "aprobada";
 
-    // MOSTRAR BOTON
     document
     .getElementById("btnWhatsapp")
     .style.display = "block";
@@ -297,29 +305,17 @@ window.aprobar = async()=>{
 // RECHAZAR
 window.rechazar = async()=>{
 
-  try{
+  document
+  .getElementById("estado")
+  .innerHTML =
 
-    document
-    .getElementById("estado")
-    .innerHTML =
+  "La reapertura NO fue autorizada.";
 
-    "La reapertura NO fue autorizada.";
+  estadoWhatsapp = "rechazada";
 
-    // ESTADO MENSAJE
-    estadoWhatsapp = "rechazada";
-
-    // MOSTRAR BOTON
-    document
-    .getElementById("btnWhatsapp")
-    .style.display = "block";
-
-  }
-
-  catch(error){
-
-    console.error(error);
-
-  }
+  document
+  .getElementById("btnWhatsapp")
+  .style.display = "block";
 
 };
 
@@ -329,7 +325,6 @@ window.enviarWhatsapp = async()=>{
 
   try{
 
-    // BUSCAR USUARIO
     const usuarioSnap =
     await getDoc(
 
@@ -354,7 +349,6 @@ window.enviarWhatsapp = async()=>{
     const usuario =
     usuarioSnap.data();
 
-    // TELEFONO
     const telefono =
     usuario.telefono || "";
 
@@ -387,7 +381,9 @@ ${actividad.nombre}
 Zona:
 ${actividad.zona}
 
-Ya puedes volver a iniciar la tarea.`;
+Tu actividad continuará desde el progreso anterior:
+
+${actividad.progreso || 0}%`;
 
     }
 
@@ -410,12 +406,10 @@ ${actividad.zona}`;
 
     }
 
-    // URL WHATSAPP
     const url =
 
     `https://wa.me/52${telefono}?text=${encodeURIComponent(mensaje)}`;
 
-    // ABRIR WHATSAPP
     window.open(url,"_blank");
 
   }
