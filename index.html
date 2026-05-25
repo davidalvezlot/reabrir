@@ -103,17 +103,12 @@ button:hover{
   opacity:0.92;
 }
 
-.aprobar{
+.reabrir{
   background:#243247;
   color:white;
 }
 
-.desde-cero{
-  background:#0f766e;
-  color:white;
-}
-
-.completar{
+.finalizar{
   background:#2563eb;
   color:white;
 }
@@ -164,29 +159,27 @@ button:hover{
     Verificando actividad...
   </div>
 
-  <button
-    class="aprobar"
-    onclick="aprobar()">
+  <!-- REABRIR DESDE ULTIMO AVANCE -->
 
-    Aprobar reapertura
+  <button
+    class="reabrir"
+    onclick="reabrirActividad()">
+
+    Reabrir desde último avance
 
   </button>
 
-  <button
-    class="desde-cero"
-    onclick="reiniciarActividad()">
+  <!-- FINALIZAR ACTIVIDAD -->
 
-    Reabrir desde cero
+  <button
+    class="finalizar"
+    onclick="finalizarActividad()">
+
+    Finalizar actividad al 100%
 
   </button>
 
-  <button
-    class="completar"
-    onclick="completarActividad()">
-
-    Completar actividad al 100%
-
-  </button>
+  <!-- RECHAZAR -->
 
   <button
     class="rechazar"
@@ -195,6 +188,8 @@ button:hover{
     No autorizar reapertura
 
   </button>
+
+  <!-- WHATSAPP -->
 
   <button
     id="btnWhatsapp"
@@ -342,10 +337,10 @@ verificar();
 
 
 /* =========================
-   APROBAR
+   REABRIR ACTIVIDAD
 ========================= */
 
-window.aprobar = async()=>{
+window.reabrirActividad = async()=>{
 
   try{
 
@@ -358,6 +353,8 @@ window.aprobar = async()=>{
         estado:"en_proceso",
 
         iniciada:true,
+
+        completada:false,
 
         fechaFin:""
 
@@ -375,8 +372,8 @@ window.aprobar = async()=>{
 
     <br><br>
 
-    El trabajador continuará desde el
-    progreso anterior.
+    La actividad continuará desde
+    el último progreso guardado.
 
     <br><br>
 
@@ -386,7 +383,7 @@ window.aprobar = async()=>{
 
     `;
 
-    estadoWhatsapp = "aprobada";
+    estadoWhatsapp = "reabierta";
 
     document
     .getElementById("btnWhatsapp")
@@ -410,86 +407,10 @@ window.aprobar = async()=>{
 
 
 /* =========================
-   REINICIAR DESDE CERO
+   FINALIZAR ACTIVIDAD
 ========================= */
 
-window.reiniciarActividad = async()=>{
-
-  try{
-
-    await updateDoc(
-
-      doc(db,"actividades",actId),
-
-      {
-
-        estado:"en_proceso",
-
-        iniciada:true,
-
-        fechaFin:"",
-
-        progreso:0,
-
-        progresoActual:0,
-
-        completada:false
-
-      }
-
-    );
-
-    actividad.progreso = 0;
-
-    document
-    .getElementById("estado")
-    .innerHTML =
-
-    `
-
-    <b>Actividad reiniciada desde cero.</b>
-
-    <br><br>
-
-    El progreso anterior fue reiniciado
-    correctamente.
-
-    <br><br>
-
-    <b>Nuevo progreso:</b>
-
-    0%
-
-    `;
-
-    estadoWhatsapp = "reiniciada";
-
-    document
-    .getElementById("btnWhatsapp")
-    .style.display = "block";
-
-  }
-
-  catch(error){
-
-    console.error(error);
-
-    document
-    .getElementById("estado")
-    .innerHTML =
-
-    "Error al reiniciar actividad";
-
-  }
-
-};
-
-
-/* =========================
-   COMPLETAR ACTIVIDAD
-========================= */
-
-window.completarActividad = async()=>{
+window.finalizarActividad = async()=>{
 
   try{
 
@@ -524,12 +445,12 @@ window.completarActividad = async()=>{
 
     `
 
-    <b>Actividad completada correctamente.</b>
+    <b>Actividad finalizada correctamente.</b>
 
     <br><br>
 
-    La actividad fue marcada
-    como finalizada al 100%.
+    La actividad fue completada
+    al 100%.
 
     <br><br>
 
@@ -539,7 +460,7 @@ window.completarActividad = async()=>{
 
     `;
 
-    estadoWhatsapp = "completada";
+    estadoWhatsapp = "finalizada";
 
     document
     .getElementById("btnWhatsapp")
@@ -555,7 +476,7 @@ window.completarActividad = async()=>{
     .getElementById("estado")
     .innerHTML =
 
-    "Error al completar actividad";
+    "Error al finalizar actividad";
 
   }
 
@@ -641,15 +562,17 @@ window.enviarWhatsapp = async()=>{
 
     let mensaje = "";
 
+    /* REABIERTA */
+
     if(
-      estadoWhatsapp === "aprobada"
+      estadoWhatsapp === "reabierta"
     ){
 
       mensaje =
 
 `Hola ${actividad.trabajador},
 
-Tu solicitud de reapertura fue APROBADA.
+Tu actividad fue REABIERTA.
 
 Actividad:
 ${actividad.nombre}
@@ -657,44 +580,23 @@ ${actividad.nombre}
 Zona:
 ${actividad.zona}
 
-La actividad continuará desde el progreso anterior:
+La actividad continuará desde el último avance registrado:
 
 ${actividad.progreso || 0}%`;
 
     }
 
+    /* FINALIZADA */
+
     if(
-      estadoWhatsapp === "reiniciada"
+      estadoWhatsapp === "finalizada"
     ){
 
       mensaje =
 
 `Hola ${actividad.trabajador},
 
-Tu actividad fue REABIERTA DESDE CERO.
-
-Actividad:
-${actividad.nombre}
-
-Zona:
-${actividad.zona}
-
-El progreso anterior fue reiniciado.
-
-Nuevo progreso:
-0%`;
-
-    }
-
-    if(
-      estadoWhatsapp === "completada"
-    ){
-
-      mensaje =
-
-`Hola ${actividad.trabajador},
-
-Tu actividad fue COMPLETADA AL 100%.
+Tu actividad fue FINALIZADA correctamente.
 
 Actividad:
 ${actividad.nombre}
@@ -703,11 +605,11 @@ Zona:
 ${actividad.zona}
 
 Progreso final:
-100%
-
-La actividad ha sido finalizada correctamente.`;
+100%`;
 
     }
+
+    /* RECHAZADA */
 
     if(
       estadoWhatsapp === "rechazada"
