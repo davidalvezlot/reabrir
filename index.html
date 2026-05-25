@@ -113,6 +113,11 @@ button:hover{
   color:white;
 }
 
+.completar{
+  background:#2563eb;
+  color:white;
+}
+
 .rechazar{
   background:#e2e8f0;
   color:#243247;
@@ -172,6 +177,14 @@ button:hover{
     onclick="reiniciarActividad()">
 
     Reabrir desde cero
+
+  </button>
+
+  <button
+    class="completar"
+    onclick="completarActividad()">
+
+    Completar actividad al 100%
 
   </button>
 
@@ -473,6 +486,83 @@ window.reiniciarActividad = async()=>{
 
 
 /* =========================
+   COMPLETAR ACTIVIDAD
+========================= */
+
+window.completarActividad = async()=>{
+
+  try{
+
+    await updateDoc(
+
+      doc(db,"actividades",actId),
+
+      {
+
+        estado:"finalizada",
+
+        iniciada:false,
+
+        completada:true,
+
+        progreso:100,
+
+        progresoActual:100,
+
+        fechaFin:
+        new Date().toISOString()
+
+      }
+
+    );
+
+    actividad.progreso = 100;
+
+    document
+    .getElementById("estado")
+    .innerHTML =
+
+    `
+
+    <b>Actividad completada correctamente.</b>
+
+    <br><br>
+
+    La actividad fue marcada
+    como finalizada al 100%.
+
+    <br><br>
+
+    <b>Progreso final:</b>
+
+    100%
+
+    `;
+
+    estadoWhatsapp = "completada";
+
+    document
+    .getElementById("btnWhatsapp")
+    .style.display = "block";
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    document
+    .getElementById("estado")
+    .innerHTML =
+
+    "Error al completar actividad";
+
+  }
+
+};
+
+
+/* =========================
    RECHAZAR
 ========================= */
 
@@ -593,6 +683,29 @@ El progreso anterior fue reiniciado.
 
 Nuevo progreso:
 0%`;
+
+    }
+
+    if(
+      estadoWhatsapp === "completada"
+    ){
+
+      mensaje =
+
+`Hola ${actividad.trabajador},
+
+Tu actividad fue COMPLETADA AL 100%.
+
+Actividad:
+${actividad.nombre}
+
+Zona:
+${actividad.zona}
+
+Progreso final:
+100%
+
+La actividad ha sido finalizada correctamente.`;
 
     }
 
