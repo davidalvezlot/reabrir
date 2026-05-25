@@ -108,6 +108,11 @@ button:hover{
   color:white;
 }
 
+.desde-cero{
+  background:#0f766e;
+  color:white;
+}
+
 .rechazar{
   background:#e2e8f0;
   color:#243247;
@@ -159,6 +164,14 @@ button:hover{
     onclick="aprobar()">
 
     Aprobar reapertura
+
+  </button>
+
+  <button
+    class="desde-cero"
+    onclick="reiniciarActividad()">
+
+    Reabrir desde cero
 
   </button>
 
@@ -384,6 +397,82 @@ window.aprobar = async()=>{
 
 
 /* =========================
+   REINICIAR DESDE CERO
+========================= */
+
+window.reiniciarActividad = async()=>{
+
+  try{
+
+    await updateDoc(
+
+      doc(db,"actividades",actId),
+
+      {
+
+        estado:"en_proceso",
+
+        iniciada:true,
+
+        fechaFin:"",
+
+        progreso:0,
+
+        progresoActual:0,
+
+        completada:false
+
+      }
+
+    );
+
+    actividad.progreso = 0;
+
+    document
+    .getElementById("estado")
+    .innerHTML =
+
+    `
+
+    <b>Actividad reiniciada desde cero.</b>
+
+    <br><br>
+
+    El progreso anterior fue reiniciado
+    correctamente.
+
+    <br><br>
+
+    <b>Nuevo progreso:</b>
+
+    0%
+
+    `;
+
+    estadoWhatsapp = "reiniciada";
+
+    document
+    .getElementById("btnWhatsapp")
+    .style.display = "block";
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    document
+    .getElementById("estado")
+    .innerHTML =
+
+    "Error al reiniciar actividad";
+
+  }
+
+};
+
+
+/* =========================
    RECHAZAR
 ========================= */
 
@@ -481,6 +570,29 @@ ${actividad.zona}
 La actividad continuará desde el progreso anterior:
 
 ${actividad.progreso || 0}%`;
+
+    }
+
+    if(
+      estadoWhatsapp === "reiniciada"
+    ){
+
+      mensaje =
+
+`Hola ${actividad.trabajador},
+
+Tu actividad fue REABIERTA DESDE CERO.
+
+Actividad:
+${actividad.nombre}
+
+Zona:
+${actividad.zona}
+
+El progreso anterior fue reiniciado.
+
+Nuevo progreso:
+0%`;
 
     }
 
