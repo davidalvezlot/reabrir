@@ -213,8 +213,7 @@ import {
   getFirestore,
   doc,
   updateDoc,
-  getDoc,
-  increment
+  getDoc
 
 }
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
@@ -312,7 +311,7 @@ async function verificar(){
 
     <br><br>
 
-    <b>Horas de actividad:</b>
+    <b>Duración:</b>
     ${actividad.duracionHoras || 2} horas
 
     <br><br>
@@ -417,18 +416,14 @@ window.finalizarActividad = async()=>{
 
   try{
 
-    // =========================
-    // HORAS REALES
-    // =========================
+    /* HORAS ACTIVIDAD */
 
     const horasActividad =
     Number(
       actividad.duracionHoras || 2
     );
 
-    // =========================
-    // FINALIZAR ACTIVIDAD
-    // =========================
+    /* ACTIVIDAD */
 
     await updateDoc(
 
@@ -456,52 +451,71 @@ window.finalizarActividad = async()=>{
 
     );
 
-    // =========================
-    // ACTUALIZAR USUARIO
-    // =========================
+    /* ACTUALIZAR USUARIO */
 
     if(actividad.usuarioId){
 
-      await updateDoc(
-
-        doc(
-          db,
-          "usuarios",
-          actividad.usuarioId
-        ),
-
-        {
-
-          // SUMAR HORAS
-          horasHoy:
-          increment(
-            horasActividad
-          ),
-
-          // ACTIVIDADES
-          actividadesHoy:
-          increment(1),
-
-          // ESTADO
-          progresoActual:100,
-
-          ultimoProgreso:100,
-
-          estadoActividad:
-          "Finalizada",
-
-          actividadActual:
-          actividad.nombre
-
-        }
-
+      const usuarioRef =
+      doc(
+        db,
+        "usuarios",
+        actividad.usuarioId
       );
+
+      const usuarioSnap =
+      await getDoc(usuarioRef);
+
+      if(usuarioSnap.exists()){
+
+        const usuario =
+        usuarioSnap.data();
+
+        const horasActuales =
+        Number(
+          usuario.horasHoy || 0
+        );
+
+        const actividadesActuales =
+        Number(
+          usuario.actividadesHoy || 0
+        );
+
+        const nuevasHoras =
+
+          horasActuales +
+          horasActividad;
+
+        await updateDoc(
+
+          usuarioRef,
+
+          {
+
+            horasHoy:
+            nuevasHoras,
+
+            actividadesHoy:
+            actividadesActuales + 1,
+
+            progresoActual:100,
+
+            ultimoProgreso:100,
+
+            estadoActividad:
+            "Finalizada",
+
+            actividadActual:
+            actividad.nombre
+
+          }
+
+        );
+
+      }
 
     }
 
-    // =========================
-    // LIBERAR RECURSO
-    // =========================
+    /* LIBERAR RECURSO */
 
     if(actividad.recursoId){
 
@@ -529,15 +543,7 @@ window.finalizarActividad = async()=>{
 
     }
 
-    // =========================
-    // ACTUALIZAR OBJETO
-    // =========================
-
     actividad.progreso = 100;
-
-    // =========================
-    // MENSAJE
-    // =========================
 
     document
     .getElementById("estado")
@@ -549,20 +555,15 @@ window.finalizarActividad = async()=>{
 
     <br><br>
 
-    Las horas fueron agregadas
-    automáticamente al trabajador.
+    Las horas de la actividad
+    fueron agregadas automáticamente
+    al trabajador.
 
     <br><br>
 
     <b>Horas agregadas:</b>
 
-    ${horasActividad.toFixed(2)} horas
-
-    <br><br>
-
-    <b>Actividad:</b>
-
-    ${actividad.nombre}
+    ${horasActividad} horas
 
     <br><br>
 
@@ -672,6 +673,8 @@ window.enviarWhatsapp = async()=>{
 
     let mensaje = "";
 
+    /* REABIERTA */
+
     if(
       estadoWhatsapp === "reabierta"
     ){
@@ -688,11 +691,13 @@ ${actividad.nombre}
 Zona:
 ${actividad.zona}
 
-La actividad continuará desde:
+La actividad continuará desde el último avance registrado:
 
 ${actividad.progreso || 0}%`;
 
     }
+
+    /* FINALIZADA */
 
     if(
       estadoWhatsapp === "finalizada"
@@ -711,12 +716,14 @@ Zona:
 ${actividad.zona}
 
 Horas agregadas:
-${actividad.duracionHoras || 2} horas
+${actividad.duracionHoras || 2}
 
 Progreso final:
 100%`;
 
     }
+
+    /* RECHAZADA */
 
     if(
       estadoWhatsapp === "rechazada"
