@@ -312,6 +312,11 @@ async function verificar(){
 
     <br><br>
 
+    <b>Horas de actividad:</b>
+    ${actividad.duracionHoras || 2} horas
+
+    <br><br>
+
     <b>Progreso actual:</b>
     ${actividad.progreso || 0}%
 
@@ -412,31 +417,18 @@ window.finalizarActividad = async()=>{
 
   try{
 
-    /* HORAS */
+    // =========================
+    // HORAS REALES
+    // =========================
 
     const horasActividad =
     Number(
       actividad.duracionHoras || 2
     );
 
-    const progresoActual =
-    Number(
-      actividad.progreso || 0
-    );
-
-    const horasYaTrabajadas =
-
-      (
-        horasActividad *
-        progresoActual
-      ) / 100;
-
-    const horasFaltantes =
-
-      horasActividad -
-      horasYaTrabajadas;
-
-    /* ACTIVIDAD */
+    // =========================
+    // FINALIZAR ACTIVIDAD
+    // =========================
 
     await updateDoc(
 
@@ -464,7 +456,9 @@ window.finalizarActividad = async()=>{
 
     );
 
-    /* USUARIO */
+    // =========================
+    // ACTUALIZAR USUARIO
+    // =========================
 
     if(actividad.usuarioId){
 
@@ -478,14 +472,17 @@ window.finalizarActividad = async()=>{
 
         {
 
+          // SUMAR HORAS
           horasHoy:
           increment(
-            horasFaltantes
+            horasActividad
           ),
 
+          // ACTIVIDADES
           actividadesHoy:
           increment(1),
 
+          // ESTADO
           progresoActual:100,
 
           ultimoProgreso:100,
@@ -502,7 +499,9 @@ window.finalizarActividad = async()=>{
 
     }
 
-    /* LIBERAR RECURSO */
+    // =========================
+    // LIBERAR RECURSO
+    // =========================
 
     if(actividad.recursoId){
 
@@ -530,7 +529,15 @@ window.finalizarActividad = async()=>{
 
     }
 
+    // =========================
+    // ACTUALIZAR OBJETO
+    // =========================
+
     actividad.progreso = 100;
+
+    // =========================
+    // MENSAJE
+    // =========================
 
     document
     .getElementById("estado")
@@ -542,15 +549,20 @@ window.finalizarActividad = async()=>{
 
     <br><br>
 
-    Se actualizaron las horas
-    trabajadas del usuario en
-    tiempo real.
+    Las horas fueron agregadas
+    automáticamente al trabajador.
 
     <br><br>
 
     <b>Horas agregadas:</b>
 
-    ${horasFaltantes.toFixed(2)} horas
+    ${horasActividad.toFixed(2)} horas
+
+    <br><br>
+
+    <b>Actividad:</b>
+
+    ${actividad.nombre}
 
     <br><br>
 
@@ -660,8 +672,6 @@ window.enviarWhatsapp = async()=>{
 
     let mensaje = "";
 
-    /* REABIERTA */
-
     if(
       estadoWhatsapp === "reabierta"
     ){
@@ -678,13 +688,11 @@ ${actividad.nombre}
 Zona:
 ${actividad.zona}
 
-La actividad continuará desde el último avance registrado:
+La actividad continuará desde:
 
 ${actividad.progreso || 0}%`;
 
     }
-
-    /* FINALIZADA */
 
     if(
       estadoWhatsapp === "finalizada"
@@ -702,12 +710,13 @@ ${actividad.nombre}
 Zona:
 ${actividad.zona}
 
+Horas agregadas:
+${actividad.duracionHoras || 2} horas
+
 Progreso final:
 100%`;
 
     }
-
-    /* RECHAZADA */
 
     if(
       estadoWhatsapp === "rechazada"
