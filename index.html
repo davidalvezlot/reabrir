@@ -159,7 +159,7 @@ button:hover{
     Verificando actividad...
   </div>
 
-  <!-- REABRIR DESDE ULTIMO AVANCE -->
+  <!-- REABRIR -->
 
   <button
     class="reabrir"
@@ -169,7 +169,7 @@ button:hover{
 
   </button>
 
-  <!-- FINALIZAR ACTIVIDAD -->
+  <!-- FINALIZAR -->
 
   <button
     class="finalizar"
@@ -209,13 +209,15 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 
 import {
+
   getFirestore,
   doc,
   updateDoc,
-  getDoc
+  getDoc,
+  increment
+
 }
 from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
 
 /* =========================
    FIREBASE
@@ -234,7 +236,6 @@ const app = initializeApp({
 const db =
 getFirestore(app);
 
-
 /* =========================
    PARAMETROS
 ========================= */
@@ -250,7 +251,6 @@ params.get("actId");
 let actividad = null;
 
 let estadoWhatsapp = "";
-
 
 /* =========================
    VERIFICAR ACTIVIDAD
@@ -335,7 +335,6 @@ async function verificar(){
 
 verificar();
 
-
 /* =========================
    REABRIR ACTIVIDAD
 ========================= */
@@ -405,7 +404,6 @@ window.reabrirActividad = async()=>{
 
 };
 
-
 /* =========================
    FINALIZAR ACTIVIDAD
 ========================= */
@@ -413,6 +411,32 @@ window.reabrirActividad = async()=>{
 window.finalizarActividad = async()=>{
 
   try{
+
+    /* HORAS */
+
+    const horasActividad =
+    Number(
+      actividad.duracionHoras || 2
+    );
+
+    const progresoActual =
+    Number(
+      actividad.progreso || 0
+    );
+
+    const horasYaTrabajadas =
+
+      (
+        horasActividad *
+        progresoActual
+      ) / 100;
+
+    const horasFaltantes =
+
+      horasActividad -
+      horasYaTrabajadas;
+
+    /* ACTIVIDAD */
 
     await updateDoc(
 
@@ -431,11 +455,80 @@ window.finalizarActividad = async()=>{
         progresoActual:100,
 
         fechaFin:
-        new Date().toISOString()
+        new Date().toISOString(),
+
+        horasReales:
+        horasActividad
 
       }
 
     );
+
+    /* USUARIO */
+
+    if(actividad.usuarioId){
+
+      await updateDoc(
+
+        doc(
+          db,
+          "usuarios",
+          actividad.usuarioId
+        ),
+
+        {
+
+          horasHoy:
+          increment(
+            horasFaltantes
+          ),
+
+          actividadesHoy:
+          increment(1),
+
+          progresoActual:100,
+
+          ultimoProgreso:100,
+
+          estadoActividad:
+          "Finalizada",
+
+          actividadActual:
+          actividad.nombre
+
+        }
+
+      );
+
+    }
+
+    /* LIBERAR RECURSO */
+
+    if(actividad.recursoId){
+
+      await updateDoc(
+
+        doc(
+          db,
+          "recursos",
+          actividad.recursoId
+        ),
+
+        {
+
+          estado:"disponible",
+
+          asignadoA:"",
+
+          nombreAsignado:"",
+
+          rolAsignado:""
+
+        }
+
+      );
+
+    }
 
     actividad.progreso = 100;
 
@@ -449,8 +542,15 @@ window.finalizarActividad = async()=>{
 
     <br><br>
 
-    La actividad fue completada
-    al 100%.
+    Se actualizaron las horas
+    trabajadas del usuario en
+    tiempo real.
+
+    <br><br>
+
+    <b>Horas agregadas:</b>
+
+    ${horasFaltantes.toFixed(2)} horas
 
     <br><br>
 
@@ -482,7 +582,6 @@ window.finalizarActividad = async()=>{
 
 };
 
-
 /* =========================
    RECHAZAR
 ========================= */
@@ -511,7 +610,6 @@ window.rechazar = async()=>{
   .style.display = "block";
 
 };
-
 
 /* =========================
    WHATSAPP
